@@ -27,14 +27,19 @@ class CheckboxField extends StatelessWidget {
       onTap: isReadOnly ? null : () => onChanged!(!value),
       child: Container(
         decoration: BoxDecoration(
-          color:
-              value ? Colors.blue.withAlpha(77) : Colors.yellow.withAlpha(64),
+          color: isReadOnly
+              ? Colors.grey.withAlpha(64)
+              : value
+                  ? Colors.blue.withAlpha(77)
+                  : Colors.yellow.withAlpha(64),
           border: Border.all(color: Colors.blue.withAlpha(128)),
           borderRadius: BorderRadius.circular(2),
         ),
         child: value
             ? CustomPaint(
-                painter: _CheckmarkPainter(),
+                painter: _CheckmarkPainter(
+                  color: isReadOnly ? Colors.grey : Colors.blue,
+                ),
                 size: Size.infinite,
               )
             : null,
@@ -45,10 +50,14 @@ class CheckboxField extends StatelessWidget {
 
 /// Custom painter for rendering a checkmark.
 class _CheckmarkPainter extends CustomPainter {
+  _CheckmarkPainter({this.color = Colors.blue});
+
+  final Color color;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.blue
+      ..color = color
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -62,5 +71,6 @@ class _CheckmarkPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _CheckmarkPainter oldDelegate) =>
+      color != oldDelegate.color;
 }

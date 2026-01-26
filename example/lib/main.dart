@@ -44,6 +44,8 @@ class _PdfFormHomePageState extends State<PdfFormHomePage> {
   Map<String, dynamic> _formData = {};
   String? _jsonError;
 
+  final Set<String> _readOnlyFields = {};
+
   bool _showJsonPanel = true;
 
   @override
@@ -298,6 +300,8 @@ class _PdfFormHomePageState extends State<PdfFormHomePage> {
                         itemBuilder: (ctx, i) {
                           final field = _fields![i];
                           final hasValue = _formData.containsKey(field.name);
+                          final isReadOnly =
+                              _readOnlyFields.contains(field.name);
                           return ListTile(
                             dense: true,
                             visualDensity: VisualDensity.compact,
@@ -310,8 +314,30 @@ class _PdfFormHomePageState extends State<PdfFormHomePage> {
                             ),
                             title: Text(
                               field.name,
-                              style: const TextStyle(fontSize: 11),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isReadOnly ? Colors.grey : null,
+                              ),
                               overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: IconButton(
+                              icon: Icon(
+                                isReadOnly ? Icons.lock : Icons.lock_open,
+                                size: 16,
+                                color: isReadOnly ? Colors.orange : Colors.grey,
+                              ),
+                              tooltip: isReadOnly
+                                  ? 'Make editable'
+                                  : 'Make read-only',
+                              onPressed: () {
+                                setState(() {
+                                  if (isReadOnly) {
+                                    _readOnlyFields.remove(field.name);
+                                  } else {
+                                    _readOnlyFields.add(field.name);
+                                  }
+                                });
+                              },
                             ),
                           );
                         },
@@ -375,6 +401,7 @@ class _PdfFormHomePageState extends State<PdfFormHomePage> {
           pdfPath: _pdfPath!,
           fields: _fields ?? [],
           formData: _formData,
+          readOnlyFields: _readOnlyFields,
           onFieldChanged: _updateField,
         ),
         Positioned(

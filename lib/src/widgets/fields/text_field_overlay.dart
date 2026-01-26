@@ -115,9 +115,11 @@ class _TextFieldOverlayState extends State<TextFieldOverlay> {
       onTap: _isEditing ? null : _startEditing,
       child: Container(
         decoration: BoxDecoration(
-          color: _isEditing
-              ? Colors.yellow.withAlpha(128)
-              : Colors.yellow.withAlpha(64),
+          color: widget.isReadOnly
+              ? Colors.grey.withAlpha(64)
+              : _isEditing
+                  ? Colors.yellow.withAlpha(128)
+                  : Colors.yellow.withAlpha(64),
           border: Border.all(
             color: _isEditing ? Colors.blue : Colors.blue.withAlpha(77),
           ),
