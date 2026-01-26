@@ -19,6 +19,7 @@ class TextFieldOverlay extends StatefulWidget {
     this.isReadOnly = false,
     this.maxLength,
     this.alignment = PdfTextAlignment.left,
+    this.onFocused,
   });
 
   /// The current text value.
@@ -48,6 +49,9 @@ class TextFieldOverlay extends StatefulWidget {
   /// The style configuration for this field.
   final PdfFormStyle style;
 
+  /// Called when the field receives focus.
+  final VoidCallback? onFocused;
+
   @override
   State<TextFieldOverlay> createState() => _TextFieldOverlayState();
 }
@@ -69,6 +73,7 @@ class _TextFieldOverlayState extends State<TextFieldOverlay> {
     _controller ??= TextEditingController();
     _controller!.text = widget.value;
     setState(() => _isEditing = true);
+    widget.onFocused?.call();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });

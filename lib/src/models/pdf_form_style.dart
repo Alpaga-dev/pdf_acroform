@@ -135,34 +135,35 @@ class PdfFormStyle {
   final Color? checkedFillColor;
 
   /// Returns the effective border color, using default if not specified.
-  Color get effectiveBorderColor => borderColor ?? Colors.blue.withAlpha(77);
+  Color get effectiveBorderColor => borderColor ?? Colors.indigo.withAlpha(80);
 
   /// Returns the effective active border color, using default if not specified.
-  Color get effectiveActiveBorderColor => activeBorderColor ?? Colors.blue;
+  Color get effectiveActiveBorderColor =>
+      activeBorderColor ?? Colors.indigoAccent;
 
   /// Returns the effective fill color, using default if not specified.
-  Color get effectiveFillColor => fillColor ?? Colors.yellow.withAlpha(64);
+  Color get effectiveFillColor => fillColor ?? Colors.amberAccent.withAlpha(36);
 
   /// Returns the effective active fill color, using default if not specified.
   Color get effectiveActiveFillColor =>
-      activeFillColor ?? Colors.yellow.withAlpha(128);
+      activeFillColor ?? Colors.amberAccent.withAlpha(80);
 
   /// Returns the effective read-only fill color, using default if not specified.
   Color get effectiveReadOnlyFillColor =>
       readOnlyFillColor ?? Colors.grey.withAlpha(64);
 
   /// Returns the effective cursor color, using default if not specified.
-  Color get effectiveCursorColor => cursorColor ?? Colors.blue;
+  Color get effectiveCursorColor => cursorColor ?? Colors.indigoAccent;
 
   /// Returns the effective selection color, using default if not specified.
   Color get effectiveSelectionColor => selectionColor ?? Colors.lightBlueAccent;
 
   /// Returns the effective check color, using default if not specified.
-  Color get effectiveCheckColor => checkColor ?? Colors.blue;
+  Color get effectiveCheckColor => checkColor ?? Colors.indigo;
 
   /// Returns the effective checked fill color, using default if not specified.
   Color get effectiveCheckedFillColor =>
-      checkedFillColor ?? Colors.blue.withAlpha(64);
+      checkedFillColor ?? Colors.indigoAccent.withAlpha(50);
 
   /// Creates a copy of this style with the given fields replaced.
   PdfFormStyle copyWith({

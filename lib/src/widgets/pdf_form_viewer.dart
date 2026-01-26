@@ -34,6 +34,13 @@ class PdfFormViewer extends StatefulWidget {
     required this.onFieldChanged,
     this.readOnlyFields = const {},
     this.style = PdfFormStyle.defaultStyle,
+    this.backgroundColor = const Color(0xFFE0E0E0),
+    this.pageDropShadow = const BoxShadow(
+      color: Colors.black38,
+      blurRadius: 5,
+      spreadRadius: 0,
+      offset: Offset(2, 4),
+    ),
     super.key,
   });
 
@@ -73,6 +80,17 @@ class PdfFormViewer extends StatefulWidget {
   /// ```
   final PdfFormStyle style;
 
+  /// The background color of the PDF viewer.
+  ///
+  /// If null, defaults to grey.
+  final Color? backgroundColor;
+
+  /// The drop shadow for PDF pages.
+  ///
+  /// Defaults to the pdfrx default shadow.
+  /// Set to [BoxShadow()] with no parameters to remove the shadow.
+  final BoxShadow pageDropShadow;
+
   @override
   State<PdfFormViewer> createState() => _PdfFormViewerState();
 }
@@ -86,6 +104,55 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
   static const double _zoomStep = 0.25;
   static const double _minZoom = 0.5;
   static const double _maxZoom = 4;
+
+  /// Scrolls the PDF viewer to make the given field visible.
+  void _scrollToField(PdfFormField field) {
+    if (_document == null) return;
+
+    // Add a small delay to let the keyboard start appearing
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+
+      try {
+        // Create a rect for the field
+        // PDF coordinates have origin at bottom-left
+        final fieldRect = pdfrx.PdfRect(
+          field.rect.left,
+          field.rect.bottom,
+          field.rect.right,
+          field.rect.top,
+        );
+
+        final calculatedRect = _pdfController.calcRectForRectInsidePage(
+          pageNumber: field.pageIndex + 1,
+          rect: fieldRect,
+        );
+
+        // Normalize the rect (PDF coords have inverted Y axis)
+        final targetRect = Rect.fromLTRB(
+          calculatedRect.left,
+          calculatedRect.top < calculatedRect.bottom
+              ? calculatedRect.top
+              : calculatedRect.bottom,
+          calculatedRect.right,
+          calculatedRect.top > calculatedRect.bottom
+              ? calculatedRect.top
+              : calculatedRect.bottom,
+        );
+
+        // Use ensureVisible to scroll the field into view
+        unawaited(
+          _pdfController.ensureVisible(
+            targetRect,
+            margin: 50,
+            duration: const Duration(milliseconds: 200),
+          ),
+        );
+      } on Exception catch (e) {
+        debugPrint('Error scrolling to field: $e');
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -145,6 +212,8 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
           widget.pdfPath,
           controller: _pdfController,
           params: pdfrx.PdfViewerParams(
+            backgroundColor: widget.backgroundColor ?? Colors.grey,
+            pageDropShadow: widget.pageDropShadow,
             enableTextSelection: false,
             annotationRenderingMode:
                 pdfrx.PdfAnnotationRenderingMode.annotation,
@@ -212,6 +281,7 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
             isReadOnly:
                 field.isReadOnly || widget.readOnlyFields.contains(field.name),
             style: widget.style,
+            onFocused: () => _scrollToField(field),
           ),
       ],
     );
@@ -229,6 +299,7 @@ class _PositionedField extends StatelessWidget {
     required this.onChanged,
     required this.isReadOnly,
     required this.style,
+    this.onFocused,
   });
 
   final PdfFormField field;
@@ -239,6 +310,7 @@ class _PositionedField extends StatelessWidget {
   final ValueChanged<dynamic> onChanged;
   final bool isReadOnly;
   final PdfFormStyle style;
+  final VoidCallback? onFocused;
 
   @override
   Widget build(BuildContext context) {
@@ -292,6 +364,7 @@ class _PositionedField extends StatelessWidget {
           maxLength: field.maxLength,
           alignment: field.alignment,
           style: style,
+          onFocused: onFocused,
         );
 
       case PdfFieldType.text:
@@ -307,6 +380,7 @@ class _PositionedField extends StatelessWidget {
           maxLength: field.maxLength,
           alignment: field.alignment,
           style: style,
+          onFocused: onFocused,
         );
     }
   }
