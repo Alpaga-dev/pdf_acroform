@@ -92,6 +92,7 @@ class _MyFormScreenState extends State<MyFormScreen> {
       pdfPath: 'form.pdf',
       fields: _fields!,
       formData: _formData,
+      readOnlyFields: {'signatureDate', 'referenceNumber'}, // Optional
       onFieldChanged: (name, value) {
         setState(() => _formData[name] = value);
       },
@@ -108,6 +109,21 @@ class _MyFormScreenState extends State<MyFormScreen> {
 | `button` | Checkbox or radio button |
 | `choice` | Dropdown or list selection |
 | `signature` | Signature field (detected but not editable) |
+
+## PdfFormViewer options
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `pdfPath` | `String` | Path to the PDF file |
+| `fields` | `List<PdfFormField>` | Fields extracted from the PDF |
+| `formData` | `Map<String, dynamic>` | Current form values |
+| `onFieldChanged` | `Function(String, dynamic)` | Callback when a field value changes |
+| `readOnlyFields` | `Set<String>` | Field names to display as read-only (optional) |
+
+The `readOnlyFields` parameter allows you to make specific fields non-editable at runtime, regardless of their read-only status in the PDF. This is useful for:
+- Locking pre-filled fields that shouldn't be modified
+- Implementing role-based field permissions
+- Creating partial preview modes
 
 ## Field properties
 
