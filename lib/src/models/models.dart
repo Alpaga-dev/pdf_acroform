@@ -6,4 +6,5 @@ library;
 
 export 'enums.dart';
 export 'pdf_form_field.dart';
+export 'pdf_form_style.dart';
 export 'pdf_rect.dart';

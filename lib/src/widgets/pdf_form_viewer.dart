@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pdf_acroform/src/models/models.dart';
 import 'package:pdf_acroform/src/widgets/fields/fields.dart';
-import 'package:pdfrx/pdfrx.dart';
+import 'package:pdfrx/pdfrx.dart' as pdfrx;
 
 /// A widget that displays a PDF with interactive form field overlays.
 ///
@@ -33,6 +33,14 @@ class PdfFormViewer extends StatefulWidget {
     required this.formData,
     required this.onFieldChanged,
     this.readOnlyFields = const {},
+    this.style = PdfFormStyle.defaultStyle,
+    this.backgroundColor = const Color(0xFFE0E0E0),
+    this.pageDropShadow = const BoxShadow(
+      color: Colors.black38,
+      blurRadius: 5,
+      spreadRadius: 0,
+      offset: Offset(2, 4),
+    ),
     super.key,
   });
 
@@ -58,19 +66,93 @@ class PdfFormViewer extends StatefulWidget {
   /// [PdfFormField.isReadOnly] property.
   final Set<String> readOnlyFields;
 
+  /// Style configuration for form field overlays.
+  ///
+  /// Controls colors, borders, and text styles of form fields.
+  /// By default, uses a PDF-like appearance independent of the app's theme.
+  ///
+  /// To match your app's theme, use [PdfFormStyle.fromTheme]:
+  /// ```dart
+  /// PdfFormViewer(
+  ///   // ...
+  ///   style: PdfFormStyle.fromTheme(Theme.of(context)),
+  /// )
+  /// ```
+  final PdfFormStyle style;
+
+  /// The background color of the PDF viewer.
+  ///
+  /// If null, defaults to grey.
+  final Color? backgroundColor;
+
+  /// The drop shadow for PDF pages.
+  ///
+  /// Defaults to the pdfrx default shadow.
+  /// Set to [BoxShadow()] with no parameters to remove the shadow.
+  final BoxShadow pageDropShadow;
+
   @override
   State<PdfFormViewer> createState() => _PdfFormViewerState();
 }
 
 class _PdfFormViewerState extends State<PdfFormViewer> {
-  final _pdfController = PdfViewerController();
-  PdfDocument? _document;
+  final _pdfController = pdfrx.PdfViewerController();
+  pdfrx.PdfDocument? _document;
 
   late Map<int, List<PdfFormField>> _fieldsByPage;
 
   static const double _zoomStep = 0.25;
   static const double _minZoom = 0.5;
   static const double _maxZoom = 4;
+
+  /// Scrolls the PDF viewer to make the given field visible.
+  void _scrollToField(PdfFormField field) {
+    if (_document == null) return;
+
+    // Add a small delay to let the keyboard start appearing
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+
+      try {
+        // Create a rect for the field
+        // PDF coordinates have origin at bottom-left
+        final fieldRect = pdfrx.PdfRect(
+          field.rect.left,
+          field.rect.bottom,
+          field.rect.right,
+          field.rect.top,
+        );
+
+        final calculatedRect = _pdfController.calcRectForRectInsidePage(
+          pageNumber: field.pageIndex + 1,
+          rect: fieldRect,
+        );
+
+        // Normalize the rect (PDF coords have inverted Y axis)
+        final targetRect = Rect.fromLTRB(
+          calculatedRect.left,
+          calculatedRect.top < calculatedRect.bottom
+              ? calculatedRect.top
+              : calculatedRect.bottom,
+          calculatedRect.right,
+          calculatedRect.top > calculatedRect.bottom
+              ? calculatedRect.top
+              : calculatedRect.bottom,
+        );
+
+        // Use ensureVisible to scroll the field into view
+        unawaited(
+          _pdfController.ensureVisible(
+            targetRect,
+            margin: 50,
+            duration: const Duration(milliseconds: 200),
+          ),
+        );
+      } on Exception catch (e) {
+        debugPrint('Error scrolling to field: $e');
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -99,7 +181,7 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
 
   Future<void> _loadDocument() async {
     try {
-      final doc = await PdfDocument.openFile(widget.pdfPath);
+      final doc = await pdfrx.PdfDocument.openFile(widget.pdfPath);
       if (mounted) setState(() => _document = doc);
     } on Exception catch (e) {
       debugPrint('Error loading PDF document: $e');
@@ -126,12 +208,15 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        PdfViewer.file(
+        pdfrx.PdfViewer.file(
           widget.pdfPath,
           controller: _pdfController,
-          params: PdfViewerParams(
+          params: pdfrx.PdfViewerParams(
+            backgroundColor: widget.backgroundColor ?? Colors.grey,
+            pageDropShadow: widget.pageDropShadow,
             enableTextSelection: false,
-            annotationRenderingMode: PdfAnnotationRenderingMode.annotation,
+            annotationRenderingMode:
+                pdfrx.PdfAnnotationRenderingMode.annotation,
             pageOverlaysBuilder: (context, pageRect, page) {
               return [
                 _buildFieldsOverlay(pageRect, page.pageNumber),
@@ -195,6 +280,8 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
             onChanged: (v) => widget.onFieldChanged(field.name, v),
             isReadOnly:
                 field.isReadOnly || widget.readOnlyFields.contains(field.name),
+            style: widget.style,
+            onFocused: () => _scrollToField(field),
           ),
       ],
     );
@@ -211,6 +298,8 @@ class _PositionedField extends StatelessWidget {
     required this.value,
     required this.onChanged,
     required this.isReadOnly,
+    required this.style,
+    this.onFocused,
   });
 
   final PdfFormField field;
@@ -220,6 +309,8 @@ class _PositionedField extends StatelessWidget {
   final dynamic value;
   final ValueChanged<dynamic> onChanged;
   final bool isReadOnly;
+  final PdfFormStyle style;
+  final VoidCallback? onFocused;
 
   @override
   Widget build(BuildContext context) {
@@ -248,6 +339,7 @@ class _PositionedField extends StatelessWidget {
         return CheckboxField(
           value: value == true || value == 'Yes' || value == '/Yes',
           onChanged: isReadOnly ? null : onChanged,
+          style: style,
         );
 
       case PdfFieldType.choice:
@@ -259,6 +351,7 @@ class _PositionedField extends StatelessWidget {
             fontSize: fontSize,
             fieldHeight: fieldHeight,
             alignment: field.alignment,
+            style: style,
           );
         }
         return TextFieldOverlay(
@@ -270,6 +363,8 @@ class _PositionedField extends StatelessWidget {
           isReadOnly: isReadOnly,
           maxLength: field.maxLength,
           alignment: field.alignment,
+          style: style,
+          onFocused: onFocused,
         );
 
       case PdfFieldType.text:
@@ -284,6 +379,8 @@ class _PositionedField extends StatelessWidget {
           isReadOnly: isReadOnly,
           maxLength: field.maxLength,
           alignment: field.alignment,
+          style: style,
+          onFocused: onFocused,
         );
     }
   }

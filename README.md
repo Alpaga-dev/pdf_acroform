@@ -119,11 +119,74 @@ class _MyFormScreenState extends State<MyFormScreen> {
 | `formData` | `Map<String, dynamic>` | Current form values |
 | `onFieldChanged` | `Function(String, dynamic)` | Callback when a field value changes |
 | `readOnlyFields` | `Set<String>` | Field names to display as read-only (optional) |
+| `style` | `PdfFormStyle` | Style configuration for form fields (optional) |
 
 The `readOnlyFields` parameter allows you to make specific fields non-editable at runtime, regardless of their read-only status in the PDF. This is useful for:
 - Locking pre-filled fields that shouldn't be modified
 - Implementing role-based field permissions
 - Creating partial preview modes
+
+## Styling form fields
+
+By default, form fields use a PDF-like appearance (yellow background, blue borders) that is independent of your app's theme. You can customize the appearance using `PdfFormStyle`.
+
+### Using your app's theme
+
+To match form fields with your app's theme, use `PdfFormStyle.fromTheme()`:
+
+```dart
+PdfFormViewer(
+  pdfPath: 'form.pdf',
+  fields: _fields!,
+  formData: _formData,
+  style: PdfFormStyle.fromTheme(Theme.of(context)),
+  onFieldChanged: (name, value) {
+    setState(() => _formData[name] = value);
+  },
+)
+```
+
+### Custom styling
+
+For fine-grained control, create a custom `PdfFormStyle`:
+
+```dart
+PdfFormViewer(
+  pdfPath: 'form.pdf',
+  fields: _fields!,
+  formData: _formData,
+  style: PdfFormStyle(
+    borderRadius: 4,
+    borderColor: Colors.grey,
+    activeBorderColor: Colors.blue,
+    fillColor: Colors.white,
+    activeFillColor: Colors.blue.withOpacity(0.1),
+    readOnlyFillColor: Colors.grey.withOpacity(0.2),
+    textStyle: TextStyle(fontFamily: 'Roboto'),
+    cursorColor: Colors.blue,
+  ),
+  onFieldChanged: (name, value) {
+    setState(() => _formData[name] = value);
+  },
+)
+```
+
+### PdfFormStyle properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `borderRadius` | `double` | Corner radius of form fields (default: 2) |
+| `borderColor` | `Color?` | Border color (default: semi-transparent blue) |
+| `activeBorderColor` | `Color?` | Border color when focused (default: blue) |
+| `fillColor` | `Color?` | Background color (default: semi-transparent yellow) |
+| `activeFillColor` | `Color?` | Background when focused (default: more opaque yellow) |
+| `readOnlyFillColor` | `Color?` | Background for read-only fields (default: grey) |
+| `textStyle` | `TextStyle?` | Text style for editable fields |
+| `readOnlyTextStyle` | `TextStyle?` | Text style for read-only fields |
+| `cursorColor` | `Color?` | Cursor color (default: blue) |
+| `selectionColor` | `Color?` | Text selection color (default: light blue) |
+| `checkColor` | `Color?` | Checkmark color in checkboxes (default: blue) |
+| `checkedFillColor` | `Color?` | Background color for checked checkboxes (default: semi-transparent blue) |
 
 ## Field properties
 
@@ -139,6 +202,25 @@ The parser extracts the following properties when available:
 - `maxLength` - Maximum character count
 - `alignment` - Text alignment (left, center, right)
 - `options` - Available choices for dropdown fields
+
+## Troubleshooting
+
+### Unwanted scroll when focusing text fields
+
+When tapping on a text field, you may experience unwanted scrolling behavior as the keyboard appears. This is caused by Flutter's default behavior of resizing the scaffold body to accommodate the keyboard.
+
+To fix this, set `resizeToAvoidBottomInset: false` on your `Scaffold`:
+
+```dart
+Scaffold(
+  resizeToAvoidBottomInset: false,
+  body: PdfFormViewer(
+    // ...
+  ),
+)
+```
+
+Similarly, if your widget tree includes a `SafeArea`, it may also cause unexpected scroll behavior. Consider removing it or adjusting your layout accordingly.
 
 ## Example app
 

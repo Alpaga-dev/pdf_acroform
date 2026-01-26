@@ -13,6 +13,7 @@ class DropdownFieldOverlay extends StatelessWidget {
     required this.onChanged,
     required this.fontSize,
     required this.fieldHeight,
+    required this.style,
     super.key,
     this.alignment = PdfTextAlignment.left,
   });
@@ -37,18 +38,36 @@ class DropdownFieldOverlay extends StatelessWidget {
   /// The text alignment.
   final PdfTextAlignment alignment;
 
+  /// The style configuration for this field.
+  final PdfFormStyle style;
+
   @override
   Widget build(BuildContext context) {
     final horizontalPadding = (fieldHeight * 0.1).clamp(2.0, 8.0);
     final isReadOnly = onChanged == null;
 
+    final defaultTextStyle = TextStyle(
+      fontSize: fontSize,
+      color: isReadOnly ? Colors.grey[700] : Colors.black,
+      height: 1.2,
+      fontWeight: FontWeight.normal,
+      fontStyle: FontStyle.normal,
+      decoration: TextDecoration.none,
+    );
+
+    final effectiveTextStyle = isReadOnly
+        ? (style.readOnlyTextStyle ?? style.textStyle)
+                ?.merge(defaultTextStyle) ??
+            defaultTextStyle
+        : style.textStyle?.merge(defaultTextStyle) ?? defaultTextStyle;
+
     return Container(
       decoration: BoxDecoration(
         color: isReadOnly
-            ? Colors.grey.withAlpha(64)
-            : Colors.yellow.withAlpha(64),
-        border: Border.all(color: Colors.blue.withAlpha(77)),
-        borderRadius: BorderRadius.circular(2),
+            ? style.effectiveReadOnlyFillColor
+            : style.effectiveFillColor,
+        border: Border.all(color: style.effectiveBorderColor),
+        borderRadius: BorderRadius.circular(style.borderRadius),
       ),
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: DropdownButtonHideUnderline(
@@ -57,11 +76,7 @@ class DropdownFieldOverlay extends StatelessWidget {
           isExpanded: true,
           isDense: true,
           icon: Icon(Icons.arrow_drop_down, size: fontSize * 1.2),
-          style: TextStyle(
-            fontSize: fontSize,
-            color: isReadOnly ? Colors.grey[700] : Colors.black,
-            height: 1.2,
-          ),
+          style: effectiveTextStyle,
           items: options.map((option) {
             return DropdownMenuItem<String>(
               value: option,
@@ -74,10 +89,7 @@ class DropdownFieldOverlay extends StatelessWidget {
           onChanged: isReadOnly ? null : (v) => onChanged?.call(v ?? ''),
           hint: Text(
             value ?? '',
-            style: TextStyle(
-              fontSize: fontSize,
-              color: Colors.black87,
-            ),
+            style: effectiveTextStyle.copyWith(color: Colors.black87),
           ),
         ),
       ),

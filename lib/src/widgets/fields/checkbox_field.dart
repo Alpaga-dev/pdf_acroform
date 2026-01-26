@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf_acroform/src/models/pdf_form_style.dart';
 
 /// A checkbox overlay widget for PDF form button fields.
 ///
@@ -9,6 +10,7 @@ class CheckboxField extends StatelessWidget {
   const CheckboxField({
     required this.value,
     required this.onChanged,
+    required this.style,
     super.key,
   });
 
@@ -20,26 +22,29 @@ class CheckboxField extends StatelessWidget {
   /// If null, the checkbox is read-only.
   final ValueChanged<bool>? onChanged;
 
+  /// The style configuration for this field.
+  final PdfFormStyle style;
+
   @override
   Widget build(BuildContext context) {
     final isReadOnly = onChanged == null;
+    final checkmarkColor = isReadOnly ? Colors.grey : style.effectiveCheckColor;
+
     return GestureDetector(
       onTap: isReadOnly ? null : () => onChanged!(!value),
       child: Container(
         decoration: BoxDecoration(
           color: isReadOnly
-              ? Colors.grey.withAlpha(64)
+              ? style.effectiveReadOnlyFillColor
               : value
-                  ? Colors.blue.withAlpha(77)
-                  : Colors.yellow.withAlpha(64),
-          border: Border.all(color: Colors.blue.withAlpha(128)),
-          borderRadius: BorderRadius.circular(2),
+                  ? style.effectiveCheckedFillColor
+                  : style.effectiveFillColor,
+          border: Border.all(color: style.effectiveBorderColor),
+          borderRadius: BorderRadius.circular(style.borderRadius),
         ),
         child: value
             ? CustomPaint(
-                painter: _CheckmarkPainter(
-                  color: isReadOnly ? Colors.grey : Colors.blue,
-                ),
+                painter: _CheckmarkPainter(color: checkmarkColor),
                 size: Size.infinite,
               )
             : null,
