@@ -1,9 +1,8 @@
 name: pdf_acroform
 description: >-
-  A Dart/Flutter package for parsing PDF AcroForm fields and displaying
-  interactive form overlays. Extract form metadata, pre-filled values,
-  and render editable fields on top of PDF documents.
-version: 0.1.0
+  A Dart/Flutter package to parse PDF AcroForm fields and display
+  interactive form overlays. Extract metadata and render editable fields.
+version: 0.1.1
 homepage: https://github.com/alpaga-dev/pdf_acroform
 repository: https://github.com/alpaga-dev/pdf_acroform
 issue_tracker: https://github.com/alpaga-dev/pdf_acroform/issues
