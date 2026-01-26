@@ -193,7 +193,8 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
             pageHeight: pageRect.height,
             value: widget.formData[field.name],
             onChanged: (v) => widget.onFieldChanged(field.name, v),
-            isReadOnly: field.isReadOnly || widget.readOnlyFields.contains(field.name),
+            isReadOnly:
+                field.isReadOnly || widget.readOnlyFields.contains(field.name),
           ),
       ],
     );
