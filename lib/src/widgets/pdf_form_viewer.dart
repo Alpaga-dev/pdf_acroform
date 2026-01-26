@@ -19,6 +19,7 @@ import 'package:pdfrx/pdfrx.dart';
 ///   pdfPath: '/path/to/form.pdf',
 ///   fields: extractedFields,
 ///   formData: {'firstName': 'John', 'newsletter': true},
+///   readOnlyFields: {'firstName'}, // These fields will be read-only
 ///   onFieldChanged: (name, value) {
 ///     setState(() => formData[name] = value);
 ///   },
@@ -31,6 +32,7 @@ class PdfFormViewer extends StatefulWidget {
     required this.fields,
     required this.formData,
     required this.onFieldChanged,
+    this.readOnlyFields = const {},
     super.key,
   });
 
@@ -49,6 +51,12 @@ class PdfFormViewer extends StatefulWidget {
   ///
   /// The callback receives the field name and the new value.
   final void Function(String fieldName, dynamic value) onFieldChanged;
+
+  /// Set of field names that should be displayed as read-only.
+  ///
+  /// Fields in this set will be non-editable regardless of their
+  /// [PdfFormField.isReadOnly] property.
+  final Set<String> readOnlyFields;
 
   @override
   State<PdfFormViewer> createState() => _PdfFormViewerState();
@@ -185,6 +193,7 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
             pageHeight: pageRect.height,
             value: widget.formData[field.name],
             onChanged: (v) => widget.onFieldChanged(field.name, v),
+            isReadOnly: field.isReadOnly || widget.readOnlyFields.contains(field.name),
           ),
       ],
     );
@@ -200,6 +209,7 @@ class _PositionedField extends StatelessWidget {
     required this.pageHeight,
     required this.value,
     required this.onChanged,
+    required this.isReadOnly,
   });
 
   final PdfFormField field;
@@ -208,6 +218,7 @@ class _PositionedField extends StatelessWidget {
   final double pageHeight;
   final dynamic value;
   final ValueChanged<dynamic> onChanged;
+  final bool isReadOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -235,7 +246,7 @@ class _PositionedField extends StatelessWidget {
       case PdfFieldType.button:
         return CheckboxField(
           value: value == true || value == 'Yes' || value == '/Yes',
-          onChanged: field.isReadOnly ? null : onChanged,
+          onChanged: isReadOnly ? null : onChanged,
         );
 
       case PdfFieldType.choice:
@@ -243,7 +254,7 @@ class _PositionedField extends StatelessWidget {
           return DropdownFieldOverlay(
             value: value?.toString(),
             options: field.options!,
-            onChanged: field.isReadOnly ? null : onChanged,
+            onChanged: isReadOnly ? null : onChanged,
             fontSize: fontSize,
             fieldHeight: fieldHeight,
             alignment: field.alignment,
@@ -255,7 +266,7 @@ class _PositionedField extends StatelessWidget {
           fontSize: fontSize,
           fieldHeight: fieldHeight,
           isMultiline: field.isMultiline,
-          isReadOnly: field.isReadOnly,
+          isReadOnly: isReadOnly,
           maxLength: field.maxLength,
           alignment: field.alignment,
         );
@@ -269,7 +280,7 @@ class _PositionedField extends StatelessWidget {
           fontSize: fontSize,
           fieldHeight: fieldHeight,
           isMultiline: field.isMultiline,
-          isReadOnly: field.isReadOnly,
+          isReadOnly: isReadOnly,
           maxLength: field.maxLength,
           alignment: field.alignment,
         );
