@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pdf_acroform/src/models/models.dart';
 import 'package:pdf_acroform/src/widgets/fields/fields.dart';
-import 'package:pdfrx/pdfrx.dart';
+import 'package:pdfrx/pdfrx.dart' as pdfrx;
 
 /// A widget that displays a PDF with interactive form field overlays.
 ///
@@ -33,6 +33,7 @@ class PdfFormViewer extends StatefulWidget {
     required this.formData,
     required this.onFieldChanged,
     this.readOnlyFields = const {},
+    this.style = PdfFormStyle.defaultStyle,
     super.key,
   });
 
@@ -58,13 +59,27 @@ class PdfFormViewer extends StatefulWidget {
   /// [PdfFormField.isReadOnly] property.
   final Set<String> readOnlyFields;
 
+  /// Style configuration for form field overlays.
+  ///
+  /// Controls colors, borders, and text styles of form fields.
+  /// By default, uses a PDF-like appearance independent of the app's theme.
+  ///
+  /// To match your app's theme, use [PdfFormStyle.fromTheme]:
+  /// ```dart
+  /// PdfFormViewer(
+  ///   // ...
+  ///   style: PdfFormStyle.fromTheme(Theme.of(context)),
+  /// )
+  /// ```
+  final PdfFormStyle style;
+
   @override
   State<PdfFormViewer> createState() => _PdfFormViewerState();
 }
 
 class _PdfFormViewerState extends State<PdfFormViewer> {
-  final _pdfController = PdfViewerController();
-  PdfDocument? _document;
+  final _pdfController = pdfrx.PdfViewerController();
+  pdfrx.PdfDocument? _document;
 
   late Map<int, List<PdfFormField>> _fieldsByPage;
 
@@ -99,7 +114,7 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
 
   Future<void> _loadDocument() async {
     try {
-      final doc = await PdfDocument.openFile(widget.pdfPath);
+      final doc = await pdfrx.PdfDocument.openFile(widget.pdfPath);
       if (mounted) setState(() => _document = doc);
     } on Exception catch (e) {
       debugPrint('Error loading PDF document: $e');
@@ -126,12 +141,13 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        PdfViewer.file(
+        pdfrx.PdfViewer.file(
           widget.pdfPath,
           controller: _pdfController,
-          params: PdfViewerParams(
+          params: pdfrx.PdfViewerParams(
             enableTextSelection: false,
-            annotationRenderingMode: PdfAnnotationRenderingMode.annotation,
+            annotationRenderingMode:
+                pdfrx.PdfAnnotationRenderingMode.annotation,
             pageOverlaysBuilder: (context, pageRect, page) {
               return [
                 _buildFieldsOverlay(pageRect, page.pageNumber),
@@ -195,6 +211,7 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
             onChanged: (v) => widget.onFieldChanged(field.name, v),
             isReadOnly:
                 field.isReadOnly || widget.readOnlyFields.contains(field.name),
+            style: widget.style,
           ),
       ],
     );
@@ -211,6 +228,7 @@ class _PositionedField extends StatelessWidget {
     required this.value,
     required this.onChanged,
     required this.isReadOnly,
+    required this.style,
   });
 
   final PdfFormField field;
@@ -220,6 +238,7 @@ class _PositionedField extends StatelessWidget {
   final dynamic value;
   final ValueChanged<dynamic> onChanged;
   final bool isReadOnly;
+  final PdfFormStyle style;
 
   @override
   Widget build(BuildContext context) {
@@ -248,6 +267,7 @@ class _PositionedField extends StatelessWidget {
         return CheckboxField(
           value: value == true || value == 'Yes' || value == '/Yes',
           onChanged: isReadOnly ? null : onChanged,
+          style: style,
         );
 
       case PdfFieldType.choice:
@@ -259,6 +279,7 @@ class _PositionedField extends StatelessWidget {
             fontSize: fontSize,
             fieldHeight: fieldHeight,
             alignment: field.alignment,
+            style: style,
           );
         }
         return TextFieldOverlay(
@@ -270,6 +291,7 @@ class _PositionedField extends StatelessWidget {
           isReadOnly: isReadOnly,
           maxLength: field.maxLength,
           alignment: field.alignment,
+          style: style,
         );
 
       case PdfFieldType.text:
@@ -284,6 +306,7 @@ class _PositionedField extends StatelessWidget {
           isReadOnly: isReadOnly,
           maxLength: field.maxLength,
           alignment: field.alignment,
+          style: style,
         );
     }
   }

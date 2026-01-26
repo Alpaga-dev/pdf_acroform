@@ -190,6 +190,7 @@ class _PdfFormHomePageState extends State<PdfFormHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: const Text('PDF AcroForm Example'),
         actions: [

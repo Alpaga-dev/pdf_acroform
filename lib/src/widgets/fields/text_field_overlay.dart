@@ -13,6 +13,7 @@ class TextFieldOverlay extends StatefulWidget {
     required this.onChanged,
     required this.fontSize,
     required this.fieldHeight,
+    required this.style,
     super.key,
     this.isMultiline = false,
     this.isReadOnly = false,
@@ -43,6 +44,9 @@ class TextFieldOverlay extends StatefulWidget {
 
   /// The text alignment.
   final PdfTextAlignment alignment;
+
+  /// The style configuration for this field.
+  final PdfFormStyle style;
 
   @override
   State<TextFieldOverlay> createState() => _TextFieldOverlayState();
@@ -110,20 +114,23 @@ class _TextFieldOverlayState extends State<TextFieldOverlay> {
   Widget build(BuildContext context) {
     final horizontalPadding = (widget.fieldHeight * 0.1).clamp(2.0, 8.0);
     final verticalPadding = (widget.fieldHeight * 0.05).clamp(1.0, 4.0);
+    final style = widget.style;
 
     return GestureDetector(
       onTap: _isEditing ? null : _startEditing,
       child: Container(
         decoration: BoxDecoration(
           color: widget.isReadOnly
-              ? Colors.grey.withAlpha(64)
+              ? style.effectiveReadOnlyFillColor
               : _isEditing
-                  ? Colors.yellow.withAlpha(128)
-                  : Colors.yellow.withAlpha(64),
+                  ? style.effectiveActiveFillColor
+                  : style.effectiveFillColor,
           border: Border.all(
-            color: _isEditing ? Colors.blue : Colors.blue.withAlpha(77),
+            color: _isEditing
+                ? style.effectiveActiveBorderColor
+                : style.effectiveBorderColor,
           ),
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(style.borderRadius),
         ),
         clipBehavior: Clip.none,
         padding: EdgeInsets.symmetric(
@@ -135,16 +142,42 @@ class _TextFieldOverlayState extends State<TextFieldOverlay> {
     );
   }
 
+  TextStyle get _defaultTextStyle => TextStyle(
+        fontSize: widget.fontSize,
+        height: 1.2,
+        color: Colors.black,
+        fontWeight: FontWeight.normal,
+        fontStyle: FontStyle.normal,
+        decoration: TextDecoration.none,
+      );
+
+  TextStyle get _effectiveTextStyle {
+    final baseStyle = widget.isReadOnly
+        ? (widget.style.readOnlyTextStyle ?? widget.style.textStyle)
+        : widget.style.textStyle;
+    if (baseStyle != null) {
+      return _defaultTextStyle.merge(baseStyle);
+    }
+    return _defaultTextStyle;
+  }
+
+  TextStyle get _effectiveReadOnlyTextStyle {
+    final baseStyle = widget.style.readOnlyTextStyle ?? widget.style.textStyle;
+    final defaultReadOnly = _defaultTextStyle.copyWith(color: Colors.grey[700]);
+    if (baseStyle != null) {
+      return defaultReadOnly.merge(baseStyle);
+    }
+    return defaultReadOnly;
+  }
+
   Widget _buildText() {
+    final textStyle =
+        widget.isReadOnly ? _effectiveReadOnlyTextStyle : _effectiveTextStyle;
     return Align(
       alignment: _containerAlignment,
       child: Text(
         widget.value,
-        style: TextStyle(
-          fontSize: widget.fontSize,
-          height: 1.2,
-          color: widget.isReadOnly ? Colors.grey[700] : null,
-        ),
+        style: textStyle,
         textAlign: _textAlign,
         maxLines: widget.isMultiline ? null : 1,
         overflow: TextOverflow.clip,
@@ -153,27 +186,37 @@ class _TextFieldOverlayState extends State<TextFieldOverlay> {
   }
 
   Widget _buildTextField() {
-    return Align(
-      alignment: _containerAlignment,
-      child: TextField(
-        controller: _controller,
-        focusNode: _focusNode,
-        onChanged: widget.onChanged,
-        onEditingComplete: widget.isMultiline ? null : _stopEditing,
-        onTapOutside: (_) => _stopEditing(),
-        style: TextStyle(
-          fontSize: widget.fontSize,
-          height: 1.2,
+    final style = widget.style;
+    // Wrap in Theme to isolate from app theme
+    return Theme(
+      data: ThemeData(
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: style.effectiveCursorColor,
+          selectionColor: style.effectiveSelectionColor,
+          selectionHandleColor: style.effectiveCursorColor,
         ),
-        maxLines: widget.isMultiline ? null : 1,
-        maxLength: widget.maxLength,
-        textAlign: _textAlign,
-        textAlignVertical: TextAlignVertical.top,
-        decoration: const InputDecoration(
-          isDense: true,
-          contentPadding: EdgeInsets.zero,
-          border: InputBorder.none,
-          counterText: '',
+      ),
+      child: Align(
+        alignment: _containerAlignment,
+        child: TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          onChanged: widget.onChanged,
+          onEditingComplete: widget.isMultiline ? null : _stopEditing,
+          onTapOutside: (_) => _stopEditing(),
+          style: _effectiveTextStyle,
+          cursorColor: style.effectiveCursorColor,
+          maxLines: widget.isMultiline ? null : 1,
+          maxLength: widget.maxLength,
+          textAlign: _textAlign,
+          textAlignVertical: TextAlignVertical.top,
+          scrollPadding: EdgeInsets.zero,
+          decoration: const InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.zero,
+            border: InputBorder.none,
+            counterText: '',
+          ),
         ),
       ),
     );
