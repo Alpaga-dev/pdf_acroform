@@ -1,0 +1,22 @@
+name: pdf_acroform_example
+description: Example app demonstrating pdf_acroform package usage.
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.0.0"
+
+dependencies:
+  file_picker: ^10.3.8
+  flutter:
+    sdk: flutter
+  pdf_acroform:
+    path: ../
+
+dev_dependencies:
+  flutter_lints: ^3.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
