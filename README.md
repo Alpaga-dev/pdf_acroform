@@ -22,9 +22,13 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  pdf_acroform:
-    git:
-      url: https://github.com/alpaga-dev/pdf_acroform.git
+  pdf_acroform: ^0.4.0
+```
+
+Then run:
+
+```bash
+flutter pub get
 ```
 
 ## Usage
@@ -120,6 +124,8 @@ class _MyFormScreenState extends State<MyFormScreen> {
 | `onFieldChanged` | `Function(String, dynamic)` | Callback when a field value changes |
 | `readOnlyFields` | `Set<String>` | Field names to display as read-only (optional) |
 | `style` | `PdfFormStyle` | Style configuration for form fields (optional) |
+| `backgroundColor` | `Color?` | Background color of the PDF viewer (default: grey) |
+| `pageDropShadow` | `BoxShadow` | Drop shadow for PDF pages (optional) |
 
 The `readOnlyFields` parameter allows you to make specific fields non-editable at runtime, regardless of their read-only status in the PDF. This is useful for:
 - Locking pre-filled fields that shouldn't be modified

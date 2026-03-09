@@ -137,8 +137,7 @@ class _PdfFormHomePageState extends State<PdfFormHomePage> {
 
     setState(() {
       _formData = extractedData;
-      _jsonController.text =
-          const JsonEncoder.withIndent('  ').convert(_formData);
+      _jsonController.text = const JsonEncoder.withIndent('  ').convert(_formData);
       _jsonError = null;
     });
     _showSnackBar('Pre-filled ${extractedData.length} fields from PDF');
@@ -147,8 +146,7 @@ class _PdfFormHomePageState extends State<PdfFormHomePage> {
   void _updateField(String fieldName, dynamic value) {
     setState(() {
       _formData[fieldName] = value;
-      _jsonController.text =
-          const JsonEncoder.withIndent('  ').convert(_formData);
+      _jsonController.text = const JsonEncoder.withIndent('  ').convert(_formData);
     });
   }
 
@@ -269,9 +267,7 @@ class _PdfFormHomePageState extends State<PdfFormHomePage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _fields != null && _fields!.isNotEmpty
-                        ? _prefillFromPdf
-                        : null,
+                    onPressed: _fields != null && _fields!.isNotEmpty ? _prefillFromPdf : null,
                     icon: const Icon(Icons.auto_fix_high),
                     label: const Text('Pre-fill'),
                   ),
@@ -301,15 +297,12 @@ class _PdfFormHomePageState extends State<PdfFormHomePage> {
                         itemBuilder: (ctx, i) {
                           final field = _fields![i];
                           final hasValue = _formData.containsKey(field.name);
-                          final isReadOnly =
-                              _readOnlyFields.contains(field.name);
+                          final isReadOnly = _readOnlyFields.contains(field.name);
                           return ListTile(
                             dense: true,
                             visualDensity: VisualDensity.compact,
                             leading: Icon(
-                              field.type == PdfFieldType.button
-                                  ? Icons.check_box_outlined
-                                  : Icons.text_fields,
+                              field.type == PdfFieldType.button ? Icons.check_box_outlined : Icons.text_fields,
                               size: 16,
                               color: hasValue ? Colors.green : Colors.grey,
                             ),
@@ -327,9 +320,7 @@ class _PdfFormHomePageState extends State<PdfFormHomePage> {
                                 size: 16,
                                 color: isReadOnly ? Colors.orange : Colors.grey,
                               ),
-                              tooltip: isReadOnly
-                                  ? 'Make editable'
-                                  : 'Make read-only',
+                              tooltip: isReadOnly ? 'Make editable' : 'Make read-only',
                               onPressed: () {
                                 setState(() {
                                   if (isReadOnly) {
