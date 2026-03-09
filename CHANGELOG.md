@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-03-09
+
+### Fixed
+
+- Font size now scales correctly with zoom level instead of being fixed
+- Multiline text fields compute font size per line for better readability
+- `PdfFormStyle.textStyle` and `readOnlyTextStyle` font size is now properly applied to all field widgets (text, checkbox, dropdown)
+
+### Changed
+
+- Font size clamp range widened from `(6.0, 16.0)` to `(1.0, 320.0)` to support extreme zoom levels
+
+### Documentation
+
+- Installation instructions now use pub.dev (`pdf_acroform: ^0.4.0`) instead of git dependency
+- Added `backgroundColor` and `pageDropShadow` parameters to the API reference table
+
 ## [0.3.0] - 2026-01-26
 
 ### Added

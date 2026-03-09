@@ -88,7 +88,7 @@ class PdfFormViewer extends StatefulWidget {
   /// The drop shadow for PDF pages.
   ///
   /// Defaults to the pdfrx default shadow.
-  /// Set to [BoxShadow()] with no parameters to remove the shadow.
+  /// Set to `BoxShadow()` with no parameters to remove the shadow.
   final BoxShadow pageDropShadow;
 
   @override
@@ -131,13 +131,9 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
         // Normalize the rect (PDF coords have inverted Y axis)
         final targetRect = Rect.fromLTRB(
           calculatedRect.left,
-          calculatedRect.top < calculatedRect.bottom
-              ? calculatedRect.top
-              : calculatedRect.bottom,
+          calculatedRect.top < calculatedRect.bottom ? calculatedRect.top : calculatedRect.bottom,
           calculatedRect.right,
-          calculatedRect.top > calculatedRect.bottom
-              ? calculatedRect.top
-              : calculatedRect.bottom,
+          calculatedRect.top > calculatedRect.bottom ? calculatedRect.top : calculatedRect.bottom,
         );
 
         // Use ensureVisible to scroll the field into view
@@ -215,8 +211,7 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
             backgroundColor: widget.backgroundColor ?? Colors.grey,
             pageDropShadow: widget.pageDropShadow,
             enableTextSelection: false,
-            annotationRenderingMode:
-                pdfrx.PdfAnnotationRenderingMode.annotation,
+            annotationRenderingMode: pdfrx.PdfAnnotationRenderingMode.annotation,
             pageOverlaysBuilder: (context, pageRect, page) {
               return [
                 _buildFieldsOverlay(pageRect, page.pageNumber),
@@ -278,8 +273,7 @@ class _PdfFormViewerState extends State<PdfFormViewer> {
             pageHeight: pageRect.height,
             value: widget.formData[field.name],
             onChanged: (v) => widget.onFieldChanged(field.name, v),
-            isReadOnly:
-                field.isReadOnly || widget.readOnlyFields.contains(field.name),
+            isReadOnly: field.isReadOnly || widget.readOnlyFields.contains(field.name),
             style: widget.style,
             onFocused: () => _scrollToField(field),
           ),
@@ -320,7 +314,10 @@ class _PositionedField extends StatelessWidget {
     final height = field.rect.height * scaleY;
     final top = pageHeight - bottom - height;
 
-    final fontSize = (height * 0.65).clamp(6.0, 16.0);
+    final referenceHeight = field.isMultiline
+        ? (field.rect.height / (field.rect.height / 12).ceil()) // divise en lignes de ~12pt
+        : field.rect.height;
+    final fontSize = (referenceHeight * scaleY * 0.65).clamp(1.0, 320.0);
 
     return Positioned(
       left: left,
@@ -334,12 +331,22 @@ class _PositionedField extends StatelessWidget {
   }
 
   Widget _buildFieldWidget(double fontSize, double fieldHeight) {
+    final textStyle = style.textStyle != null
+        ? style.textStyle!.copyWith(fontSize: fontSize, height: 1)
+        : TextStyle(fontSize: fontSize, height: 1);
+
+    final readOnlyTextStyle = style.textStyle != null
+        ? style.readOnlyTextStyle!.copyWith(fontSize: fontSize, height: 1)
+        : TextStyle(fontSize: fontSize, height: 1);
+
+    final pdfFormStyle = style.copyWith(textStyle: textStyle, readOnlyTextStyle: readOnlyTextStyle);
+
     switch (field.type) {
       case PdfFieldType.button:
         return CheckboxField(
           value: value == true || value == 'Yes' || value == '/Yes',
           onChanged: isReadOnly ? null : onChanged,
-          style: style,
+          style: pdfFormStyle,
         );
 
       case PdfFieldType.choice:
@@ -351,7 +358,7 @@ class _PositionedField extends StatelessWidget {
             fontSize: fontSize,
             fieldHeight: fieldHeight,
             alignment: field.alignment,
-            style: style,
+            style: pdfFormStyle,
           );
         }
         return TextFieldOverlay(
@@ -363,7 +370,7 @@ class _PositionedField extends StatelessWidget {
           isReadOnly: isReadOnly,
           maxLength: field.maxLength,
           alignment: field.alignment,
-          style: style,
+          style: pdfFormStyle,
           onFocused: onFocused,
         );
 
@@ -379,7 +386,7 @@ class _PositionedField extends StatelessWidget {
           isReadOnly: isReadOnly,
           maxLength: field.maxLength,
           alignment: field.alignment,
-          style: style,
+          style: pdfFormStyle,
           onFocused: onFocused,
         );
     }
